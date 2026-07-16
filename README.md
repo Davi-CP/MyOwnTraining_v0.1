@@ -1,5 +1,3 @@
-Segue uma versão corrigida e mais profissional do seu README.md:
-
 # My Own Training
 
 ## Sobre o projeto
