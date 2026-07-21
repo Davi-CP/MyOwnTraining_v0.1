@@ -6,7 +6,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const { data, isLoading } = useAuthSession();
 
   if (isLoading) return <div>Carregando...</div>;
-  if (!data?.user) return <Navigate to="/login" />;
+  if (!data?.user) return <Navigate to="/" />;
 
   return <>{children}</>;
 }
