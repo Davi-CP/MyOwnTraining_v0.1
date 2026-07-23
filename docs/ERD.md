@@ -1,360 +1,834 @@
-# Entidades do sistema
-1. Usuário(auth.user)
-*Descrição*: Usuários do sistema autenticados pelo banco de dados(Supabase)
+# ERD — Sistema de Personal Trainers
 
-2. Usuários com perfil Admin(admin_users)
-- *Descrição*: Usuários com acesso administrativo (admin, suporte, financeiro).
-- *Atributos Principais*: 
-    - id, 
-    - user_id --> referencia Usuário(auth.user)
-    - email
-    - role --> papel
-3. Perfis de profissionais (professional_profiles)
+## Convenções de nomenclatura
 
-    Descrição: Dados do profissional (personal trainer) que oferece serviços.
+- Tabelas e atributos da aplicação em **PT-BR**.
+- `auth.users` é mantida como tabela nativa do Supabase.
+- Chaves estrangeiras seguem o padrão `<entidade>_id`.
+- Datas e timestamps seguem o padrão `<acao>_em`, exceto `agendado_para`, quando representa um horário futuro de agendamento.
+- Campos booleanos não utilizam prefixo `is_`.
+- Campos financeiros utilizam nomes explícitos em português.
+- Campos JSON utilizam nomes que indicam seu conteúdo (`dados`, `anexos`, `disponibilidade`).
 
-    Atributos principais:
+---
 
-        id (identificador único)
+# 1. Usuários — `auth.users`
 
-        user_id → auth.users
+## Descrição
 
-        full_name, phone, bio
+Tabela nativa de autenticação do Supabase. Representa a conta autenticada do usuário no sistema.
 
-        city, neighborhood, latitude, longitude
+Não é uma tabela de domínio controlada diretamente pela aplicação.
 
-        specialties (especialidades, array)
+## Atributos principais
 
-        equipment (equipamentos, array)
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único do usuário |
+| `email` | texto | E-mail da conta |
+| `created_at` | timestamp | Campo nativo do Supabase, quando disponível |
+| `updated_at` | timestamp | Campo nativo do Supabase, quando disponível |
 
-        price_per_hour, lesson_price (preço por hora/aula)
+> Os campos efetivamente disponíveis dependem da estrutura interna do Supabase Auth. O atributo principal utilizado como referência pelas tabelas da aplicação é `id`.
 
-        cref_number, cref_verified (número do CREF e se está verificado)
+## Relacionamentos
 
-        rating, total_reviews (avaliação média e total de avaliações)
+- `0..1` → `perfis_cliente`
+- `0..1` → `perfis_personal_trainer`
+- `0..1` → `usuarios_admin` — somente se essa tabela for mantida
+- `N` → `papeis_usuario`
+- `0..1` → `carteiras`
+- `0..1` → `indicacoes_codigo`
+- `N` → `indicacoes_recompensas` como usuário indicado
+- `N` → `notificacoes`
+- `N` → `chamados_suporte`
+- `N` → `mensagens_suporte`
+- `N` → `documentos_cref` como revisor
 
-        is_active, premium
+---
 
-        availability (disponibilidade semanal, provavelmente JSON)
+# 2. Perfis de clientes — `perfis_cliente`
 
-    Relacionamentos:
+## Descrição
 
-        user_id → auth.users (1:1)
+Representa os dados de domínio específicos de um cliente da plataforma.
 
-        Um profissional pode ter várias reservas (bookings, recurring_bookings)
+A separação entre `auth.users` e `perfis_cliente` mantém a conta de autenticação independente dos dados específicos do cliente.
 
-        Um profissional pode ter vários documentos CREF (cref_documents)
+Também permite que um mesmo usuário possa, futuramente, atuar como cliente e personal trainer.
 
-        Um profissional aparece em rankings (trainer_rankings)
+## Atributos principais
 
-        Um profissional pode ser favoritado por clientes (favorites)
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único do perfil |
+| `usuario_id` | UUID / FK | Referência a `auth.users.id` |
+| `nome_completo` | texto | Nome completo do cliente |
+| `telefone` | texto | Telefone de contato |
+| `cidade` | texto | Cidade de residência |
+| `uf` | texto | Unidade federativa |
+| `cep` | texto | Código de Endereçamento Postal |
+| `bairro` | texto | Bairro |
+| `logradouro` | texto | Rua, avenida ou logradouro |
+| `numero` | texto | Número do endereço |
+| `complemento` | texto | Complemento do endereço |
+| `latitude` | decimal | Latitude da localização |
+| `longitude` | decimal | Longitude da localização |
+| `criado_em` | timestamp | Data e hora de criação |
+| `atualizado_em` | timestamp | Data e hora da última atualização |
 
-4. Reservas (bookings)
+## Constraints recomendadas
 
-    Descrição: Sessão de treino agendada entre um cliente e um profissional.
+- `usuario_id` → FK para `auth.users.id`
+- `UNIQUE (usuario_id)`
 
-    Atributos principais:
+## Relacionamentos
 
-        id
+- `usuario_id` → `auth.users.id` — 1:1
+- Um cliente possui `N` → `agendamentos`
+- Um cliente possui `N` → `agendamentos_recorrentes`
+- Um cliente possui `N` → `favoritos`
 
-        client_id → client_profiles.id
+---
 
-        trainer_id → professional_profiles.id
+# 3. Perfis de personal trainers — `perfis_personal_trainer`
 
-        scheduled_at (data/hora agendada)
+## Descrição
 
-        duration_minutes (duração em minutos)
+Representa o perfil profissional do personal trainer que oferece serviços na plataforma.
 
-        quantity (quantidade de sessões)
+Contém dados profissionais, localização de atendimento, especialidades, equipamentos, preços, reputação e disponibilidade.
 
-        location (local da aula)
+## Atributos principais
 
-        status (estado da reserva)
+### Identificação
 
-        subtotal, discount, platform_fee, trainer_receives, total (valores financeiros)
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único do perfil |
+| `usuario_id` | UUID / FK | Referência a `auth.users.id` |
+| `nome_completo` | texto | Nome completo do profissional |
+| `telefone` | texto | Telefone de contato |
+| `bio` | texto | Biografia ou apresentação profissional |
 
-        notes (observações)
+### Localização
 
-    Relacionamentos (implícitos, sem FK explícita no tipos):
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `cidade` | texto | Cidade de atendimento |
+| `uf` | texto | Unidade federativa |
+| `cep` | texto | Código de Endereçamento Postal |
+| `bairro` | texto | Bairro |
+| `logradouro` | texto | Rua, avenida ou logradouro |
+| `numero` | texto | Número do endereço |
+| `complemento` | texto | Complemento do endereço |
+| `latitude` | decimal | Latitude da localização |
+| `longitude` | decimal | Longitude da localização |
+| `raio_atendimento_km` | decimal | Raio máximo de atendimento em quilômetros |
 
-        client_id → client_profiles.id (um cliente possui várias reservas)
+### Informações profissionais
 
-        trainer_id → professional_profiles.id (um profissional possui várias reservas)
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `especialidades` | array / JSON | Especialidades oferecidas |
+| `equipamentos` | array / JSON | Equipamentos disponíveis |
+| `preco_por_hora` | decimal | Preço por hora |
+| `preco_por_aula` | decimal | Preço por aula |
+| `numero_cref` | texto | Número profissional do CREF |
 
-        Uma reserva pode gerar transações na carteira (wallet_transactions)
+### Reputação
 
-5. Reservas recorrentes (recurring_bookings)
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `avaliacao` | decimal | Avaliação média do profissional |
+| `total_avaliacoes` | inteiro | Quantidade total de avaliações |
 
-    Descrição: Agendamento semanal recorrente, sem data específica.
+### Status
 
-    Atributos principais:
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `ativo` | boolean | Indica se o perfil está ativo |
+| `premium` | boolean | Indica se o profissional possui status premium |
 
-        id
+### Disponibilidade
 
-        client_id → client_profiles.id
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `disponibilidade` | JSON | Disponibilidade semanal, caso seja mantida diretamente no perfil |
 
-        trainer_id → professional_profiles.id
+### Auditoria
 
-        weekday (dia da semana, número)
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `criado_em` | timestamp | Data e hora de criação |
+| `atualizado_em` | timestamp | Data e hora da última atualização |
 
-        start_time (horário de início)
+## Constraints recomendadas
 
-        duration_minutes
+- `usuario_id` → FK para `auth.users.id`
+- `UNIQUE (usuario_id)`
 
-        location
+## Relacionamentos
 
-        active (se está ativo)
+- `usuario_id` → `auth.users.id` — 1:1
+- Um personal possui `N` → `agendamentos`
+- Um personal possui `N` → `agendamentos_recorrentes`
+- Um personal possui `N` → `favoritos`
+- Um personal possui `N` → `documentos_cref`
+- Um personal possui `N` → `rankings_personais`
 
-    Relacionamentos:
+## Observações
 
-        client_id → client_profiles.id
+- `numero_cref` representa o número profissional atual/oficial.
+- Não é recomendado manter `cref_verificado` como booleano separado.
+- A situação de verificação deve ser derivada do documento CREF vigente/aprovado em `documentos_cref`.
+- Se `bio` não for desejado como termo técnico, pode ser substituído por `biografia`.
 
-        trainer_id → professional_profiles.id
+---
 
-6. Favoritos (favorites)
+# 4. Agendamentos — `agendamentos`
 
-    Descrição: Tabela associativa que marca os profissionais favoritos de um cliente.
+## Descrição
 
-    Atributos:
+Representa uma sessão individual de treino agendada entre um cliente e um personal trainer.
 
-        id
+É o registro efetivo de uma sessão na agenda.
 
-        client_id → client_profiles.id
+## Atributos principais
 
-        trainer_id → professional_profiles.id
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único do agendamento |
+| `cliente_id` | UUID / FK | Referência a `perfis_cliente.id` |
+| `personal_id` | UUID / FK | Referência a `perfis_personal_trainer.id` |
+| `recorrencia_id` | UUID / FK / NULL | Referência opcional a `agendamentos_recorrentes.id` |
+| `agendado_para` | timestamp | Data e hora previstas para a sessão |
+| `duracao_minutos` | inteiro | Duração da sessão em minutos |
+| `local` | texto / JSON | Local onde a sessão será realizada |
+| `status` | enum / texto | Estado atual do agendamento |
+| `observacoes` | texto | Observações relacionadas à sessão |
 
-    Relacionamentos:
+### Valores financeiros
 
-        client_id → client_profiles.id (um cliente tem N favoritos)
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `subtotal` | decimal | Valor bruto antes de descontos e taxas |
+| `desconto` | decimal | Valor ou desconto aplicado |
+| `taxa_plataforma` | decimal | Taxa retida pela plataforma |
+| `valor_personal` | decimal | Valor destinado ao personal trainer |
+| `total` | decimal | Valor total da transação |
 
-        trainer_id → professional_profiles.id (um profissional pode ser favorito de N clientes)
+### Auditoria
 
-        Representa um relacionamento N:N entre cliente e profissional.
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `criado_em` | timestamp | Data e hora de criação |
+| `atualizado_em` | timestamp | Data e hora da última atualização |
 
-7. Documentos CREF (cref_documents)
+## Relacionamentos
 
-    Descrição: Documentos enviados para comprovação do registro no CREF.
+- `cliente_id` → `perfis_cliente.id`
+- `personal_id` → `perfis_personal_trainer.id`
+- `recorrencia_id` → `agendamentos_recorrentes.id`, opcional
+- Um agendamento pode gerar `N` → `transacoes_carteira`
 
-    Atributos:
+## Observação
 
-        id
+O campo `quantidade` foi removido do modelo básico.
 
-        trainer_id → professional_profiles.id
+Se representar quantidade de aulas adquiridas em um pacote, recomenda-se criar uma entidade comercial separada, como `contratacoes` ou `pedidos`.
 
-        cref_number
+---
 
-        document_url
+# 5. Agendamentos recorrentes — `agendamentos_recorrentes`
 
-        status (ex.: pendente, aprovado, rejeitado)
+## Descrição
 
-        reviewed_by (quem revisou, provavelmente admin)
+Define uma regra de recorrência para sessões periódicas.
 
-        reviewed_at
+A recorrência não representa necessariamente uma sessão individual; ela funciona como uma regra que pode gerar vários agendamentos.
 
-        notes
+## Atributos principais
 
-    Relacionamentos:
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único da recorrência |
+| `cliente_id` | UUID / FK | Referência a `perfis_cliente.id` |
+| `personal_id` | UUID / FK | Referência a `perfis_personal_trainer.id` |
+| `dia_semana` | inteiro / enum | Dia da semana da recorrência |
+| `hora_inicio` | time | Horário de início |
+| `duracao_minutos` | inteiro | Duração em minutos |
+| `local` | texto / JSON | Local da sessão |
+| `data_inicio` | date | Início da vigência |
+| `data_fim` | date / NULL | Fim da vigência |
+| `ativo` | boolean | Indica se a recorrência está ativa |
+| `criado_em` | timestamp | Data e hora de criação |
+| `atualizado_em` | timestamp | Data e hora da última atualização |
 
-        trainer_id → professional_profiles.id (um profissional pode ter vários documentos)
+## Relacionamentos
 
-        reviewed_by → admin_users.user_id ou auth.users (revisor)
+- `cliente_id` → `perfis_cliente.id`
+- `personal_id` → `perfis_personal_trainer.id`
+- Uma recorrência gera `N` → `agendamentos`
 
-8. Carteiras (wallets)
+## Exemplo
 
-    Descrição: Carteira financeira de um usuário (cliente ou profissional).
+```text
+Agendamento recorrente #10
+├── Segunda-feira
+├── 08:00
+├── 60 minutos
+├── 01/08 → 30/09
+│
+├── Agendamento 01/08
+├── Agendamento 08/08
+├── Agendamento 15/08
+└── Agendamento 22/08
+```
 
-    Atributos:
+---
 
-        id
+# 6. Favoritos — `favoritos`
 
-        user_id → auth.users
+## Descrição
 
-        balance (saldo disponível)
+Tabela associativa que representa os personal trainers favoritados por clientes.
 
-        pending (saldo pendente)
+Modela uma relação N:N entre clientes e personal trainers.
 
-    Relacionamentos:
+## Atributos principais
 
-        user_id → auth.users (cada usuário tem uma única carteira, 1:1)
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único |
+| `cliente_id` | UUID / FK | Referência a `perfis_cliente.id` |
+| `personal_id` | UUID / FK | Referência a `perfis_personal_trainer.id` |
+| `criado_em` | timestamp | Data e hora em que o favorito foi criado |
 
-        Uma carteira tem várias transações (wallet_transactions)
+## Relacionamentos
 
-9. Transações da carteira (wallet_transactions)
+- `cliente_id` → `perfis_cliente.id`
+- `personal_id` → `perfis_personal_trainer.id`
 
-    Descrição: Movimentação financeira na carteira (crédito, débito, estorno etc.).
+## Constraint recomendada
 
-    Atributos:
+```text
+UNIQUE (cliente_id, personal_id)
+```
 
-        id
+---
 
-        wallet_id → wallets.id (FK explícita)
+# 7. Documentos CREF — `documentos_cref`
 
-        user_id → auth.users (dono da carteira)
+## Descrição
 
-        booking_id → bookings.id (FK explícita, pode ser nulo se não vinculado a uma reserva)
+Armazena os documentos enviados pelos personal trainers para comprovação do registro profissional.
 
-        amount (valor)
+Permite manter histórico de submissões, rejeições e novas tentativas.
 
-        type (tipo: crédito, débito, etc.)
+## Atributos principais
 
-        status (concluída, pendente, etc.)
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único |
+| `personal_id` | UUID / FK | Referência a `perfis_personal_trainer.id` |
+| `numero_cref` | texto | Número do CREF associado ao documento |
+| `url_documento` | texto | URL ou referência ao documento armazenado |
+| `status` | enum / texto | Estado da análise do documento |
+| `revisado_por` | UUID / FK / NULL | Usuário que revisou o documento |
+| `revisado_em` | timestamp / NULL | Data e hora da revisão |
+| `observacoes` | texto / NULL | Observações da análise |
+| `criado_em` | timestamp | Data e hora de criação |
+| `atualizado_em` | timestamp | Data e hora da última atualização |
 
-        description
+## Status possíveis
 
-    Relacionamentos:
+```text
+pendente
+aprovado
+rejeitado
+```
 
-        wallet_id → wallets.id (uma transação pertence a uma carteira)
+## Relacionamentos
 
-        booking_id → bookings.id (transação opcionalmente ligada a uma reserva)
+- `personal_id` → `perfis_personal_trainer.id`
+- `revisado_por` → `auth.users.id`
+- Um personal possui `N` documentos ao longo do tempo
 
-10. Notificações (notifications)
+## Regra de negócio
 
-    Descrição: Notificações enviadas aos usuários.
+Pode existir histórico de documentos, mas somente um documento deve representar a verificação vigente.
 
-    Atributos:
+A regra pode ser implementada por uma combinação de status e constraint/lógica que garanta apenas um documento aprovado vigente por personal.
 
-        id
+---
 
-        user_id → auth.users
+# 8. Carteiras — `carteiras`
 
-        title, body
+## Descrição
 
-        type
+Representa a carteira financeira de um usuário.
 
-        read (lida ou não)
+Cada usuário possui no máximo uma carteira.
 
-        data (JSON com dados extras)
+## Atributos principais
 
-    Relacionamentos:
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único da carteira |
+| `usuario_id` | UUID / FK | Referência a `auth.users.id` |
+| `saldo_disponivel` | decimal | Saldo disponível para utilização |
+| `saldo_pendente` | decimal | Saldo ainda pendente de liberação |
+| `criado_em` | timestamp | Data e hora de criação |
+| `atualizado_em` | timestamp | Data e hora da última atualização |
 
-        user_id → auth.users (um usuário tem várias notificações)
+## Constraints recomendadas
 
-11. Códigos de indicação (referral_codes)
+- `usuario_id` → FK para `auth.users.id`
+- `UNIQUE (usuario_id)`
 
-    Descrição: Código de indicação único por usuário.
+## Relacionamentos
 
-    Atributos:
+- `usuario_id` → `auth.users.id` — 1:1
+- Uma carteira possui `N` → `transacoes_carteira`
 
-        id
+---
 
-        user_id → auth.users
+# 9. Transações da carteira — `transacoes_carteira`
 
-        code (código alfanumérico)
+## Descrição
 
-        active (ativo/inativo)
+Representa cada movimentação financeira registrada em uma carteira.
 
-        uses_count (quantos usos)
+Pode representar créditos, débitos, estornos, pagamentos ou outros eventos financeiros.
 
-    Relacionamentos:
+## Atributos principais
 
-        user_id → auth.users (um usuário pode ter um código de indicação, 1:1)
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único |
+| `carteira_id` | UUID / FK | Referência a `carteiras.id` |
+| `agendamento_id` | UUID / FK / NULL | Referência opcional a `agendamentos.id` |
+| `valor` | decimal | Valor da movimentação |
+| `tipo` | enum / texto | Tipo da movimentação |
+| `status` | enum / texto | Estado da transação |
+| `descricao` | texto | Descrição da movimentação |
+| `criado_em` | timestamp | Data e hora de criação |
+| `atualizado_em` | timestamp | Data e hora da última atualização |
 
-        Um código pode gerar várias recompensas (referral_rewards)
+## Relacionamentos
 
-12. Recompensas de indicação (referral_rewards)
+- `carteira_id` → `carteiras.id`
+- `agendamento_id` → `agendamentos.id`, opcional
 
-    Descrição: Registro de recompensa concedida quando um novo usuário se cadastra usando um código de indicação.
+## Observação
 
-    Atributos:
+O `usuario_id` não é armazenado diretamente na transação.
 
-        id
+O usuário dono da transação pode ser obtido por:
 
-        referrer_id → auth.users (quem indicou)
+```text
+transacoes_carteira
+    ↓
+carteiras
+    ↓
+auth.users
+```
 
-        referred_user_id → auth.users (quem foi indicado)
+Isso reduz redundância e evita inconsistências.
 
-        code_id → referral_codes.id (FK explícita)
+## Observação arquitetural
 
-        reward_amount (valor da recompensa)
+Se o sistema possuir pagamentos, saques, reembolsos, compras de pacotes e recompensas, pode ser necessário introduzir entidades financeiras/comerciais adicionais, como:
 
-        status
+- `contratacoes`
+- `pedidos`
+- `pagamentos`
 
-    Relacionamentos:
+---
 
-        code_id → referral_codes.id (uma recompensa pertence a um código)
+# 10. Notificações — `notificacoes`
 
-        referrer_id → auth.users
+## Descrição
 
-        referred_user_id → auth.users
+Armazena notificações enviadas aos usuários.
 
-13. Chamados de suporte (support_tickets)
+Pode representar notificações de agendamento, pagamentos, suporte, promoções etc.
 
-    Descrição: Ticket de suporte aberto por um usuário.
+## Atributos principais
 
-    Atributos:
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único |
+| `usuario_id` | UUID / FK | Referência a `auth.users.id` |
+| `titulo` | texto | Título da notificação |
+| `corpo` | texto | Corpo da notificação |
+| `tipo` | enum / texto | Tipo da notificação |
+| `dados` | JSON / NULL | Dados adicionais relacionados à notificação |
+| `lida_em` | timestamp / NULL | Data e hora em que foi lida |
+| `criado_em` | timestamp | Data e hora de criação |
 
-        id
+## Relacionamentos
 
-        user_id → auth.users
+- `usuario_id` → `auth.users.id`
+- Um usuário possui `N` notificações
 
-        subject, category
+## Observação
 
-        priority, status
+`lida_em` é preferível a um campo booleano `lida`, pois permite saber quando a notificação foi visualizada.
 
-    Relacionamentos:
+---
 
-        user_id → auth.users (um usuário pode abrir vários chamados)
+# 11. Códigos de indicação — `indicacoes_codigo`
 
-        Um chamado tem várias mensagens (support_messages)
+## Descrição
 
-14. Mensagens de suporte (support_messages)
+Representa o código de indicação pertencente a um usuário.
 
-    Descrição: Mensagem individual dentro de um chamado de suporte.
+Um usuário possui no máximo um código de indicação.
 
-    Atributos:
+## Atributos principais
 
-        id
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único |
+| `usuario_id` | UUID / FK | Referência a `auth.users.id` |
+| `codigo` | texto | Código alfanumérico único |
+| `ativo` | boolean | Indica se o código está ativo |
+| `quantidade_usos` | inteiro | Quantidade de vezes que o código foi utilizado |
+| `criado_em` | timestamp | Data e hora de criação |
+| `atualizado_em` | timestamp | Data e hora da última atualização |
 
-        ticket_id → support_tickets.id (FK explícita)
+## Constraints recomendadas
 
-        sender_id → auth.users (quem enviou)
+```text
+UNIQUE (usuario_id)
+UNIQUE (codigo)
+```
 
-        message
+## Relacionamentos
 
-        attachments (JSON com anexos)
+- `usuario_id` → `auth.users.id` — 1:1
+- Um código gera `N` → `indicacoes_recompensas`
 
-    Relacionamentos:
+---
 
-        ticket_id → support_tickets.id (um chamado tem várias mensagens)
+# 12. Recompensas de indicação — `indicacoes_recompensas`
 
-        sender_id → auth.users (remetente da mensagem)
+## Descrição
 
-15. Rankings de treinadores (trainer_rankings)
+Registra uma recompensa gerada quando um usuário é indicado por outro através de um código de indicação.
 
-    Descrição: Classificações (rankings) de profissionais, possivelmente por região e modalidade.
+## Atributos principais
 
-    Atributos:
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único |
+| `codigo_indicacao_id` | UUID / FK | Referência a `indicacoes_codigo.id` |
+| `usuario_indicado_id` | UUID / FK | Usuário que foi indicado |
+| `valor_recompensa` | decimal | Valor da recompensa |
+| `status` | enum / texto | Estado da recompensa |
+| `criado_em` | timestamp | Data e hora de criação |
+| `atualizado_em` | timestamp | Data e hora da última atualização |
 
-        id
+## Relacionamentos
 
-        trainer_id → professional_profiles.id
+- `codigo_indicacao_id` → `indicacoes_codigo.id`
+- `usuario_indicado_id` → `auth.users.id`
 
-        score, position
+O usuário que indicou é obtido através de:
 
-        period (período do ranking)
+```text
+indicacoes_recompensas
+    ↓
+indicacoes_codigo
+    ↓
+usuario_id
+    ↓
+auth.users
+```
 
-        modality (modalidade)
+## Observação
 
-        city, neighborhood (filtros regionais)
+Não é necessário armazenar `indicador_id` separadamente, pois o usuário indicador pode ser derivado do código de indicação utilizado.
 
-        computed_at
+---
 
-    Relacionamentos:
+# 13. Chamados de suporte — `chamados_suporte`
 
-        trainer_id → professional_profiles.id
+## Descrição
 
-16. Papéis de usuário (user_roles)
+Representa um chamado de suporte aberto por um usuário.
 
-    Descrição: Atribuição de papel (role) a um usuário autenticado.
+## Atributos principais
 
-    Atributos:
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único |
+| `usuario_id` | UUID / FK | Usuário que abriu o chamado |
+| `assunto` | texto | Assunto do chamado |
+| `categoria` | enum / texto | Categoria do chamado |
+| `prioridade` | enum / texto | Prioridade do atendimento |
+| `status` | enum / texto | Estado atual do chamado |
+| `criado_em` | timestamp | Data e hora de criação |
+| `atualizado_em` | timestamp | Data e hora da última atualização |
+| `fechado_em` | timestamp / NULL | Data e hora do fechamento |
 
-        id
+## Relacionamentos
 
-        user_id → auth.users
+- `usuario_id` → `auth.users.id`
+- Um usuário possui `N` chamados
+- Um chamado possui `N` → `mensagens_suporte`
 
-        role → enum app_role (admin | support | finance | user)
+---
 
-    Relacionamentos:
+# 14. Mensagens de suporte — `mensagens_suporte`
 
-        user_id → auth.users (um usuário pode ter um papel definido, complementar ao admin_users)
+## Descrição
+
+Representa uma mensagem individual dentro de um chamado de suporte.
+
+Pode ser enviada pelo próprio usuário ou por um atendente.
+
+## Atributos principais
+
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único |
+| `chamado_id` | UUID / FK | Referência a `chamados_suporte.id` |
+| `usuario_id` | UUID / FK | Usuário que enviou a mensagem |
+| `mensagem` | texto | Conteúdo da mensagem |
+| `anexos` | JSON / NULL | Anexos associados à mensagem |
+| `criado_em` | timestamp | Data e hora de criação |
+
+## Relacionamentos
+
+- `chamado_id` → `chamados_suporte.id`
+- `usuario_id` → `auth.users.id`
+
+## Observação
+
+O `usuario_id` pode representar:
+
+- o usuário que abriu o chamado;
+- um usuário administrativo;
+- um usuário de suporte.
+
+A autorização para envio deve ser controlada pelas regras de acesso e RLS.
+
+---
+
+# 15. Rankings de personal trainers — `rankings_personais`
+
+## Descrição
+
+Armazena resultados calculados de rankings de personal trainers.
+
+Permite rankings por período, modalidade e região.
+
+## Atributos principais
+
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único |
+| `personal_id` | UUID / FK | Referência a `perfis_personal_trainer.id` |
+| `pontuacao` | decimal | Pontuação calculada |
+| `posicao` | inteiro | Posição no ranking |
+| `periodo` | texto / date range | Período de referência do ranking |
+| `modalidade` | texto / FK | Modalidade considerada |
+| `cidade` | texto / NULL | Filtro regional por cidade |
+| `bairro` | texto / NULL | Filtro regional por bairro |
+| `calculado_em` | timestamp | Data e hora do cálculo do ranking |
+
+## Relacionamentos
+
+- `personal_id` → `perfis_personal_trainer.id`
+- Um personal aparece em `N` rankings ao longo do tempo
+
+## Constraint recomendada
+
+A combinação deve ser única para evitar duplicação:
+
+```text
+UNIQUE (
+    personal_id,
+    periodo,
+    modalidade,
+    cidade,
+    bairro
+)
+```
+
+A definição final depende da modelagem de `periodo`.
+
+---
+
+# 16. Papéis de usuário — `papeis_usuario`
+
+## Descrição
+
+Define os papéis de autorização associados a um usuário.
+
+É a fonte de verdade para autorização baseada em papel.
+
+## Atributos principais
+
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único |
+| `usuario_id` | UUID / FK | Referência a `auth.users.id` |
+| `papel` | enum `papel_usuario` | Papel de autorização do usuário |
+
+## Valores possíveis
+
+```text
+admin
+suporte
+financeiro
+usuario
+```
+
+## Relacionamentos
+
+- `usuario_id` → `auth.users.id`
+
+## Constraint recomendada
+
+Se um usuário puder acumular múltiplos papéis:
+
+```text
+UNIQUE (usuario_id, papel)
+```
+
+Assim, o mesmo usuário pode possuir:
+
+```text
+admin
+suporte
+```
+
+sem permitir duplicação do mesmo papel.
+
+---
+
+# 17. Usuários administrativos — `usuarios_admin`
+
+## Descrição
+
+Representa dados específicos de usuários que fazem parte da estrutura administrativa da plataforma.
+
+Essa tabela não deve ser a fonte de verdade para o papel de autorização. Os papéis devem ser definidos em `papeis_usuario`.
+
+## Atributos principais
+
+| Atributo | Tipo conceitual | Descrição |
+|---|---|---|
+| `id` | UUID | Identificador único |
+| `usuario_id` | UUID / FK | Referência a `auth.users.id` |
+| `criado_em` | timestamp | Data e hora de criação |
+| `atualizado_em` | timestamp | Data e hora da última atualização |
+
+## Constraints recomendadas
+
+- `usuario_id` → FK para `auth.users.id`
+- `UNIQUE (usuario_id)`
+
+## Relacionamentos
+
+- `usuario_id` → `auth.users.id` — 1:1
+- Um usuário administrativo possui papéis definidos em `papeis_usuario`
+
+## Observação arquitetural
+
+Esta tabela só deve ser mantida se representar uma entidade de domínio real, por exemplo, um funcionário administrativo com atributos próprios.
+
+Se ela existir apenas para indicar que um usuário é `admin`, `suporte` ou `financeiro`, pode ser redundante, pois `papeis_usuario` já cumpre essa função.
+
+---
+
+# Visão consolidada das relações
+
+```text
+auth.users
+│
+├── 0..1 ── perfis_cliente
+│              │
+│              ├── 1:N ── agendamentos
+│              ├── 1:N ── agendamentos_recorrentes
+│              └── 1:N ── favoritos
+│
+├── 0..1 ── perfis_personal_trainer
+│              │
+│              ├── 1:N ── agendamentos
+│              ├── 1:N ── agendamentos_recorrentes
+│              ├── 1:N ── favoritos
+│              ├── 1:N ── documentos_cref
+│              └── 1:N ── rankings_personais
+│
+├── 0..1 ── carteiras
+│              │
+│              └── 1:N ── transacoes_carteira
+│
+├── 0..1 ── indicacoes_codigo
+│              │
+│              └── 1:N ── indicacoes_recompensas
+│
+├── 1:N ─── notificacoes
+├── 1:N ─── chamados_suporte
+├── 1:N ─── mensagens_suporte
+├── 1:N ─── documentos_cref (como revisor)
+└── 1:N ─── papeis_usuario
+
+agendamentos_recorrentes
+        │
+        └── 1:N ── agendamentos
+
+chamados_suporte
+        │
+        └── 1:N ── mensagens_suporte
+
+indicacoes_codigo
+        │
+        └── 1:N ── indicacoes_recompensas
+```
+
+---
+
+# Decisões de nomenclatura adotadas
+
+| Conceito | Nome adotado |
+|---|---|
+| User ID | `usuario_id` |
+| Client ID | `cliente_id` |
+| Trainer ID | `personal_id` |
+| Wallet ID | `carteira_id` |
+| Booking ID | `agendamento_id` |
+| Recurrence ID | `recorrencia_id` |
+| Ticket ID | `chamado_id` |
+| Referral Code ID | `codigo_indicacao_id` |
+| Created At | `criado_em` |
+| Updated At | `atualizado_em` |
+| Scheduled At | `agendado_para` |
+| Duration | `duracao_minutos` |
+| Location | `local` |
+| Discount | `desconto` |
+| Trainer Receives | `valor_personal` |
+| Balance | `saldo_disponivel` |
+| Pending Balance | `saldo_pendente` |
+| Amount | `valor` |
+| Type | `tipo` |
+| Description | `descricao` |
+| Read At | `lida_em` |
+| Closed At | `fechado_em` |
+| Reviewed By | `revisado_por` |
+| Reviewed At | `revisado_em` |
+| Score | `pontuacao` |
+| Position | `posicao` |
+| Computed At | `calculado_em` |
+| Referral Code | `codigo` |
+| Uses Count | `quantidade_usos` |
+| Reward Amount | `valor_recompensa` |
+| Referred User | `usuario_indicado_id` |
+| Attachments | `anexos` |
+| User Roles | `papeis_usuario` |
+| User Role Enum | `papel_usuario` |
