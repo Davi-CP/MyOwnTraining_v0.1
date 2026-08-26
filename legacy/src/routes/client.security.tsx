@@ -1,0 +1,154 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, Shield, Lock, Bell, MapPin, UserX, Trash2, FileText } from "lucide-react";
+import { useState } from "react";
+import { BottomNav } from "@/components/BottomNav";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  useStored, KEYS, DEFAULT_PRIVACY_SETTINGS, type PrivacySettings, type BlockedUser,
+} from "@/lib/storage";
+import { TRAINERS } from "@/lib/mock-data";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/client/security")({
+  component: SecurityPage,
+  head: () => ({ meta: [{ title: "Segurança e privacidade — MyOwnTraining" }] }),
+});
+
+function SecurityPage() {
+  const navigate = useNavigate();
+  const [settings, setSettings] = useStored<PrivacySettings>(KEYS.privacySettings, DEFAULT_PRIVACY_SETTINGS);
+  const [blocked, setBlocked] = useStored<BlockedUser[]>(KEYS.blockedTrainers, []);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [delOpen, setDelOpen] = useState(false);
+  const [cur, setCur] = useState(""); const [nw, setNw] = useState(""); const [cf, setCf] = useState("");
+  const [delPw, setDelPw] = useState("");
+
+  const toggle = (k: keyof PrivacySettings) => setSettings({ ...settings, [k]: !settings[k] });
+
+  const changePw = () => {
+    if (nw.length < 6) return toast.error("Nova senha precisa de ao menos 6 caracteres");
+    if (nw !== cf) return toast.error("Senhas não coincidem");
+    if (!cur) return toast.error("Informe a senha atual");
+    toast.success("Senha alterada com sucesso");
+    setPwOpen(false); setCur(""); setNw(""); setCf("");
+  };
+
+  const unblock = (id: string) => {
+    setBlocked(blocked.filter((b) => b.targetId !== id));
+    toast.success("Profissional desbloqueado");
+  };
+
+  const deleteAccount = () => {
+    if (!delPw) return toast.error("Confirme sua senha");
+    toast.success("Conta excluída");
+    setDelOpen(false);
+    setTimeout(() => navigate({ to: "/" }), 600);
+  };
+
+  const blockedTrainers = blocked
+    .map((b) => TRAINERS.find((t) => t.id === b.targetId))
+    .filter((t): t is NonNullable<typeof t> => !!t);
+
+  return (
+    <div className="min-h-screen bg-background pb-24">
+      <div className="mx-auto max-w-md px-5 pt-6">
+        <div className="mb-4 flex items-center gap-3">
+          <Link to="/profile" className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <h1 className="flex-1 text-xl font-bold">Segurança e privacidade</h1>
+          <Shield className="h-5 w-5 text-muted-foreground" />
+        </div>
+
+        <div className="overflow-hidden rounded-2xl bg-card shadow-[var(--shadow-soft)]">
+          <button onClick={() => setPwOpen(true)} className="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm hover:bg-muted/40">
+            <Lock className="h-4 w-4 text-muted-foreground" />
+            <span className="flex-1">Alterar senha</span>
+          </button>
+          <div className="flex items-center gap-3 border-t border-border px-4 py-3.5 text-sm">
+            <Bell className="h-4 w-4 text-muted-foreground" />
+            <span className="flex-1">Notificações</span>
+            <Switch checked={settings.notificationsEnabled} onCheckedChange={() => toggle("notificationsEnabled")} />
+          </div>
+          <div className="flex items-center gap-3 border-t border-border px-4 py-3.5 text-sm">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <span className="flex-1">Compartilhar localização</span>
+            <Switch checked={settings.locationEnabled} onCheckedChange={() => toggle("locationEnabled")} />
+          </div>
+          <div className="flex items-center gap-3 border-t border-border px-4 py-3.5 text-sm">
+            <Bell className="h-4 w-4 text-muted-foreground" />
+            <span className="flex-1">E-mails de marketing</span>
+            <Switch checked={settings.marketingEmails} onCheckedChange={() => toggle("marketingEmails")} />
+          </div>
+        </div>
+
+        <h2 className="mt-6 mb-2 flex items-center gap-2 text-sm font-semibold">
+          <UserX className="h-4 w-4" /> Profissionais bloqueados
+        </h2>
+        <div className="overflow-hidden rounded-2xl bg-card shadow-[var(--shadow-soft)]">
+          {blockedTrainers.length === 0 && (
+            <p className="p-4 text-center text-xs text-muted-foreground">Nenhum profissional bloqueado.</p>
+          )}
+          {blockedTrainers.map((t, i) => (
+            <div key={t.id} className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? "border-t border-border" : ""}`}>
+              <img src={t.photo} alt="" className="h-10 w-10 rounded-full object-cover" />
+              <p className="flex-1 text-sm font-medium">{t.name}</p>
+              <Button variant="outline" size="sm" onClick={() => unblock(t.id)} className="h-8 rounded-full text-xs">Desbloquear</Button>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 overflow-hidden rounded-2xl bg-card shadow-[var(--shadow-soft)]">
+          <Link to="/client/terms" className="flex items-center gap-3 px-4 py-3.5 text-sm hover:bg-muted/40">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="flex-1">Termos de uso</span>
+          </Link>
+          <Link to="/client/privacy" className="flex items-center gap-3 border-t border-border px-4 py-3.5 text-sm hover:bg-muted/40">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="flex-1">Política de privacidade</span>
+          </Link>
+        </div>
+
+        <button onClick={() => setDelOpen(true)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-card px-4 py-3.5 text-sm font-medium text-destructive shadow-[var(--shadow-soft)]">
+          <Trash2 className="h-4 w-4" /> Excluir conta
+        </button>
+      </div>
+
+      <Dialog open={pwOpen} onOpenChange={setPwOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Alterar senha</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Input type="password" placeholder="Senha atual" value={cur} onChange={(e) => setCur(e.target.value)} />
+            <Input type="password" placeholder="Nova senha" value={nw} onChange={(e) => setNw(e.target.value)} />
+            <Input type="password" placeholder="Confirmar nova senha" value={cf} onChange={(e) => setCf(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPwOpen(false)}>Cancelar</Button>
+            <Button onClick={changePw} className="bg-[var(--brand-yellow)] text-[var(--brand-black)] hover:bg-[var(--brand-yellow)]/90">Confirmar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={delOpen} onOpenChange={setDelOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir conta</DialogTitle>
+            <DialogDescription>Esta ação é permanente. Todos os seus dados serão removidos.</DialogDescription>
+          </DialogHeader>
+          <Input type="password" placeholder="Confirme sua senha" value={delPw} onChange={(e) => setDelPw(e.target.value)} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDelOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={deleteAccount}>Excluir definitivamente</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <BottomNav />
+    </div>
+  );
+}

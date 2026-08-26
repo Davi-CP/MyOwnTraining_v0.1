@@ -11,7 +11,20 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PrivateRouteImport } from './routes/_private'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProTermsRouteImport } from './routes/pro.terms'
+import { Route as ProPrivacyRouteImport } from './routes/pro.privacy'
+import { Route as ClientTermsRouteImport } from './routes/client.terms'
+import { Route as ClientPrivacyRouteImport } from './routes/client.privacy'
+import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as PrivateProfileRouteImport } from './routes/_private.profile'
+import { Route as PrivateHomeRouteImport } from './routes/_private.home'
+import { Route as PrivateFavoritesRouteImport } from './routes/_private.favorites'
+import { Route as PrivateBookingsRouteImport } from './routes/_private.bookings'
+import { Route as PrivateTrainerIdRouteImport } from './routes/_private.trainer.$id'
+import { Route as PrivateProSchedulesRouteImport } from './routes/_private.pro.schedules'
+import { Route as PrivateProProfileRouteImport } from './routes/_private.pro.profile'
+import { Route as PrivateProHistoryRouteImport } from './routes/_private.pro.history'
+import { Route as PrivateProDashboardRouteImport } from './routes/_private.pro.dashboard'
 
 const PrivateRoute = PrivateRouteImport.update({
   id: '/_private',
@@ -22,37 +35,193 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProTermsRoute = ProTermsRouteImport.update({
+  id: '/pro/terms',
+  path: '/pro/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProPrivacyRoute = ProPrivacyRouteImport.update({
+  id: '/pro/privacy',
+  path: '/pro/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientTermsRoute = ClientTermsRouteImport.update({
+  id: '/client/terms',
+  path: '/client/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientPrivacyRoute = ClientPrivacyRouteImport.update({
+  id: '/client/privacy',
+  path: '/client/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/admin/dashboard',
+  path: '/admin/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivateProfileRoute = PrivateProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
   getParentRoute: () => PrivateRoute,
 } as any)
+const PrivateHomeRoute = PrivateHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => PrivateRoute,
+} as any)
+const PrivateFavoritesRoute = PrivateFavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => PrivateRoute,
+} as any)
+const PrivateBookingsRoute = PrivateBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => PrivateRoute,
+} as any)
+const PrivateTrainerIdRoute = PrivateTrainerIdRouteImport.update({
+  id: '/trainer/$id',
+  path: '/trainer/$id',
+  getParentRoute: () => PrivateRoute,
+} as any)
+const PrivateProSchedulesRoute = PrivateProSchedulesRouteImport.update({
+  id: '/pro/schedules',
+  path: '/pro/schedules',
+  getParentRoute: () => PrivateRoute,
+} as any)
+const PrivateProProfileRoute = PrivateProProfileRouteImport.update({
+  id: '/pro/profile',
+  path: '/pro/profile',
+  getParentRoute: () => PrivateRoute,
+} as any)
+const PrivateProHistoryRoute = PrivateProHistoryRouteImport.update({
+  id: '/pro/history',
+  path: '/pro/history',
+  getParentRoute: () => PrivateRoute,
+} as any)
+const PrivateProDashboardRoute = PrivateProDashboardRouteImport.update({
+  id: '/pro/dashboard',
+  path: '/pro/dashboard',
+  getParentRoute: () => PrivateRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bookings': typeof PrivateBookingsRoute
+  '/favorites': typeof PrivateFavoritesRoute
+  '/home': typeof PrivateHomeRoute
   '/profile': typeof PrivateProfileRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/client/privacy': typeof ClientPrivacyRoute
+  '/client/terms': typeof ClientTermsRoute
+  '/pro/privacy': typeof ProPrivacyRoute
+  '/pro/terms': typeof ProTermsRoute
+  '/pro/dashboard': typeof PrivateProDashboardRoute
+  '/pro/history': typeof PrivateProHistoryRoute
+  '/pro/profile': typeof PrivateProProfileRoute
+  '/pro/schedules': typeof PrivateProSchedulesRoute
+  '/trainer/$id': typeof PrivateTrainerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bookings': typeof PrivateBookingsRoute
+  '/favorites': typeof PrivateFavoritesRoute
+  '/home': typeof PrivateHomeRoute
   '/profile': typeof PrivateProfileRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/client/privacy': typeof ClientPrivacyRoute
+  '/client/terms': typeof ClientTermsRoute
+  '/pro/privacy': typeof ProPrivacyRoute
+  '/pro/terms': typeof ProTermsRoute
+  '/pro/dashboard': typeof PrivateProDashboardRoute
+  '/pro/history': typeof PrivateProHistoryRoute
+  '/pro/profile': typeof PrivateProProfileRoute
+  '/pro/schedules': typeof PrivateProSchedulesRoute
+  '/trainer/$id': typeof PrivateTrainerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_private': typeof PrivateRouteWithChildren
+  '/_private/bookings': typeof PrivateBookingsRoute
+  '/_private/favorites': typeof PrivateFavoritesRoute
+  '/_private/home': typeof PrivateHomeRoute
   '/_private/profile': typeof PrivateProfileRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/client/privacy': typeof ClientPrivacyRoute
+  '/client/terms': typeof ClientTermsRoute
+  '/pro/privacy': typeof ProPrivacyRoute
+  '/pro/terms': typeof ProTermsRoute
+  '/_private/pro/dashboard': typeof PrivateProDashboardRoute
+  '/_private/pro/history': typeof PrivateProHistoryRoute
+  '/_private/pro/profile': typeof PrivateProProfileRoute
+  '/_private/pro/schedules': typeof PrivateProSchedulesRoute
+  '/_private/trainer/$id': typeof PrivateTrainerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/profile'
+  fullPaths:
+    | '/'
+    | '/bookings'
+    | '/favorites'
+    | '/home'
+    | '/profile'
+    | '/admin/dashboard'
+    | '/client/privacy'
+    | '/client/terms'
+    | '/pro/privacy'
+    | '/pro/terms'
+    | '/pro/dashboard'
+    | '/pro/history'
+    | '/pro/profile'
+    | '/pro/schedules'
+    | '/trainer/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/profile'
-  id: '__root__' | '/' | '/_private' | '/_private/profile'
+  to:
+    | '/'
+    | '/bookings'
+    | '/favorites'
+    | '/home'
+    | '/profile'
+    | '/admin/dashboard'
+    | '/client/privacy'
+    | '/client/terms'
+    | '/pro/privacy'
+    | '/pro/terms'
+    | '/pro/dashboard'
+    | '/pro/history'
+    | '/pro/profile'
+    | '/pro/schedules'
+    | '/trainer/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/_private'
+    | '/_private/bookings'
+    | '/_private/favorites'
+    | '/_private/home'
+    | '/_private/profile'
+    | '/admin/dashboard'
+    | '/client/privacy'
+    | '/client/terms'
+    | '/pro/privacy'
+    | '/pro/terms'
+    | '/_private/pro/dashboard'
+    | '/_private/pro/history'
+    | '/_private/pro/profile'
+    | '/_private/pro/schedules'
+    | '/_private/trainer/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PrivateRoute: typeof PrivateRouteWithChildren
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  ClientPrivacyRoute: typeof ClientPrivacyRoute
+  ClientTermsRoute: typeof ClientTermsRoute
+  ProPrivacyRoute: typeof ProPrivacyRoute
+  ProTermsRoute: typeof ProTermsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -71,6 +240,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pro/terms': {
+      id: '/pro/terms'
+      path: '/pro/terms'
+      fullPath: '/pro/terms'
+      preLoaderRoute: typeof ProTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pro/privacy': {
+      id: '/pro/privacy'
+      path: '/pro/privacy'
+      fullPath: '/pro/privacy'
+      preLoaderRoute: typeof ProPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client/terms': {
+      id: '/client/terms'
+      path: '/client/terms'
+      fullPath: '/client/terms'
+      preLoaderRoute: typeof ClientTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client/privacy': {
+      id: '/client/privacy'
+      path: '/client/privacy'
+      fullPath: '/client/privacy'
+      preLoaderRoute: typeof ClientPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_private/profile': {
       id: '/_private/profile'
       path: '/profile'
@@ -78,15 +282,87 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateProfileRouteImport
       parentRoute: typeof PrivateRoute
     }
+    '/_private/home': {
+      id: '/_private/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof PrivateHomeRouteImport
+      parentRoute: typeof PrivateRoute
+    }
+    '/_private/favorites': {
+      id: '/_private/favorites'
+      path: '/favorites'
+      fullPath: '/favorites'
+      preLoaderRoute: typeof PrivateFavoritesRouteImport
+      parentRoute: typeof PrivateRoute
+    }
+    '/_private/bookings': {
+      id: '/_private/bookings'
+      path: '/bookings'
+      fullPath: '/bookings'
+      preLoaderRoute: typeof PrivateBookingsRouteImport
+      parentRoute: typeof PrivateRoute
+    }
+    '/_private/trainer/$id': {
+      id: '/_private/trainer/$id'
+      path: '/trainer/$id'
+      fullPath: '/trainer/$id'
+      preLoaderRoute: typeof PrivateTrainerIdRouteImport
+      parentRoute: typeof PrivateRoute
+    }
+    '/_private/pro/schedules': {
+      id: '/_private/pro/schedules'
+      path: '/pro/schedules'
+      fullPath: '/pro/schedules'
+      preLoaderRoute: typeof PrivateProSchedulesRouteImport
+      parentRoute: typeof PrivateRoute
+    }
+    '/_private/pro/profile': {
+      id: '/_private/pro/profile'
+      path: '/pro/profile'
+      fullPath: '/pro/profile'
+      preLoaderRoute: typeof PrivateProProfileRouteImport
+      parentRoute: typeof PrivateRoute
+    }
+    '/_private/pro/history': {
+      id: '/_private/pro/history'
+      path: '/pro/history'
+      fullPath: '/pro/history'
+      preLoaderRoute: typeof PrivateProHistoryRouteImport
+      parentRoute: typeof PrivateRoute
+    }
+    '/_private/pro/dashboard': {
+      id: '/_private/pro/dashboard'
+      path: '/pro/dashboard'
+      fullPath: '/pro/dashboard'
+      preLoaderRoute: typeof PrivateProDashboardRouteImport
+      parentRoute: typeof PrivateRoute
+    }
   }
 }
 
 interface PrivateRouteChildren {
+  PrivateBookingsRoute: typeof PrivateBookingsRoute
+  PrivateFavoritesRoute: typeof PrivateFavoritesRoute
+  PrivateHomeRoute: typeof PrivateHomeRoute
   PrivateProfileRoute: typeof PrivateProfileRoute
+  PrivateProDashboardRoute: typeof PrivateProDashboardRoute
+  PrivateProHistoryRoute: typeof PrivateProHistoryRoute
+  PrivateProProfileRoute: typeof PrivateProProfileRoute
+  PrivateProSchedulesRoute: typeof PrivateProSchedulesRoute
+  PrivateTrainerIdRoute: typeof PrivateTrainerIdRoute
 }
 
 const PrivateRouteChildren: PrivateRouteChildren = {
+  PrivateBookingsRoute: PrivateBookingsRoute,
+  PrivateFavoritesRoute: PrivateFavoritesRoute,
+  PrivateHomeRoute: PrivateHomeRoute,
   PrivateProfileRoute: PrivateProfileRoute,
+  PrivateProDashboardRoute: PrivateProDashboardRoute,
+  PrivateProHistoryRoute: PrivateProHistoryRoute,
+  PrivateProProfileRoute: PrivateProProfileRoute,
+  PrivateProSchedulesRoute: PrivateProSchedulesRoute,
+  PrivateTrainerIdRoute: PrivateTrainerIdRoute,
 }
 
 const PrivateRouteWithChildren =
@@ -95,6 +371,11 @@ const PrivateRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PrivateRoute: PrivateRouteWithChildren,
+  AdminDashboardRoute: AdminDashboardRoute,
+  ClientPrivacyRoute: ClientPrivacyRoute,
+  ClientTermsRoute: ClientTermsRoute,
+  ProPrivacyRoute: ProPrivacyRoute,
+  ProTermsRoute: ProTermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
