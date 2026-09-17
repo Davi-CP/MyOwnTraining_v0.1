@@ -1,28 +1,65 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MapPin, MessageSquareText, Star } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { BottomNav } from "../shared/components/bottom-nav";
 import { Button } from "../shared/components/button";
 import { ReviewModal } from "../shared/components/review-modal";
-import { trainers } from "../shared/data/mock-domain";
+import { formatDistance } from "../shared/lib/utils";
+import { useTrainer } from "../modules/marketplace/hooks/use-trainer";
 
 export const Route = createFileRoute("/_private/trainer/$id")({
   component: TrainerPage,
 });
 
+function TrainerAvatar({ name, photo }: { name: string; photo: string | null }) {
+  if (photo) {
+    return <img src={photo} alt={name} className="h-56 w-full object-cover" />;
+  }
+  const initials = name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+  return (
+    <div className="flex h-56 w-full items-center justify-center bg-muted text-4xl font-bold text-muted-foreground">
+      {initials || "PT"}
+    </div>
+  );
+}
+
 function TrainerPage() {
   const { id } = Route.useParams();
-  const trainer = useMemo(
-    () => trainers.find((entry) => entry.id === id) ?? trainers[0],
-    [id],
-  );
+  const { data: trainer, isLoading } = useTrainer(id);
   const [reviewOpen, setReviewOpen] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <div className="mx-auto max-w-md px-5 pt-6 text-left">
+          <p className="py-10 text-center text-sm text-muted-foreground">Carregando profissional...</p>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (!trainer) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <div className="mx-auto max-w-md px-5 pt-6 text-left">
+          <p className="py-10 text-center text-sm text-muted-foreground">Profissional não encontrado.</p>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-md px-5 pt-6 text-left">
         <div className="overflow-hidden rounded-[2rem] bg-card shadow-[var(--shadow-soft)]">
-          <img src={trainer.photo} alt={trainer.name} className="h-56 w-full object-cover" />
+          <TrainerAvatar name={trainer.name} photo={trainer.photo} />
           <div className="space-y-3 p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -41,16 +78,18 @@ function TrainerPage() {
             <div className="flex items-center gap-4 text-sm">
               <span className="flex items-center gap-1 font-medium">
                 <Star className="h-4 w-4 fill-[var(--brand-yellow)] text-[var(--brand-yellow)]" />
-                {trainer.rating}
+                {trainer.rating.toFixed(1)}
               </span>
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                {trainer.distanceKm} km
-              </span>
+              {trainer.distanceKm != null && (
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  {formatDistance(trainer.distanceKm)} km
+                </span>
+              )}
             </div>
 
             <p className="text-sm text-muted-foreground">
-              Atuação em {trainer.neighborhood}, {trainer.city}. UI pronta para detalhes do perfil, agendamento e avaliações.
+              Atuação em {trainer.neighborhood || "região próxima"}, {trainer.city}. UI pronta para detalhes do perfil, agendamento e avaliações.
             </p>
 
             <div className="flex gap-2">

@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AlertTriangle, BadgeCheck, ShieldCheck, Users } from "lucide-react";
 import { authContainer } from "../modules/auth/auth.container";
 import { Button } from "../shared/components/button";
+import { useAdminMetrics } from "../modules/marketplace/hooks/use-admin-metrics";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: AdminDashboardPage,
@@ -18,19 +19,25 @@ export const Route = createFileRoute("/admin/dashboard")({
 });
 
 function AdminDashboardPage() {
+  const { data: metrics, isLoading } = useAdminMetrics();
+
+  const cards = [
+    { label: "Usuários", value: metrics ? String(metrics.usuarios) : "—", icon: Users },
+    { label: "CREF", value: metrics ? `${metrics.crefPendentes} pendentes` : "—", icon: BadgeCheck },
+    { label: "Chamados", value: metrics ? `${metrics.chamadosAbertos} abertos` : "—", icon: AlertTriangle },
+    { label: "Segurança", value: "OK", icon: ShieldCheck },
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-10">
       <div className="mx-auto max-w-md px-5 pt-6 text-left">
         <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Admin</p>
         <h1 className="mt-2 text-2xl font-bold">Painel administrativo</h1>
 
+        {isLoading && <p className="mt-4 text-sm text-muted-foreground">Carregando métricas...</p>}
+
         <div className="mt-5 grid grid-cols-2 gap-3">
-          {[
-            { label: "Usuários", value: "1.284", icon: Users },
-            { label: "CREF", value: "18 pendentes", icon: BadgeCheck },
-            { label: "Chamados", value: "32 abertos", icon: AlertTriangle },
-            { label: "Segurança", value: "OK", icon: ShieldCheck },
-          ].map((metric) => (
+          {cards.map((metric) => (
             <div key={metric.label} className="rounded-3xl bg-card p-4 shadow-[var(--shadow-soft)]">
               <metric.icon className="h-5 w-5 text-[var(--brand-yellow)]" />
               <p className="mt-3 text-[11px] uppercase tracking-wide text-muted-foreground">{metric.label}</p>

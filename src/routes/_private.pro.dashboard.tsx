@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Bell, Wallet } from "lucide-react";
 import { ProBottomNav } from "../shared/components/pro-bottom-nav";
 import { Button } from "../shared/components/button";
-import { proMetrics, trainers } from "../shared/data/mock-domain";
+import { formatBRL, formatDate, formatTime } from "../shared/lib/utils";
+import { useProDashboard } from "../modules/marketplace/hooks/use-pro-dashboard";
 
 export const Route = createFileRoute("/_private/pro/dashboard")({
   component: ProDashboardPage,
@@ -10,6 +11,41 @@ export const Route = createFileRoute("/_private/pro/dashboard")({
 });
 
 function ProDashboardPage() {
+  const { data: dashboard, isLoading } = useProDashboard();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <div className="mx-auto max-w-md px-5 pt-6 text-left">
+          <p className="py-10 text-center text-sm text-muted-foreground">Carregando dashboard...</p>
+        </div>
+        <ProBottomNav />
+      </div>
+    );
+  }
+
+  if (!dashboard) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <div className="mx-auto max-w-md px-5 pt-6 text-left">
+          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Profissional</p>
+          <h1 className="mt-2 text-2xl font-bold">Dashboard</h1>
+          <p className="mt-5 text-sm text-muted-foreground">
+            Complete seu perfil profissional para visualizar as métricas.
+          </p>
+        </div>
+        <ProBottomNav />
+      </div>
+    );
+  }
+
+  const metrics = [
+    { label: "Saldo disponível", value: formatBRL(dashboard.saldoDisponivel) },
+    { label: "Treinos concluídos", value: String(dashboard.treinosConcluidos) },
+    { label: "Avaliação média", value: dashboard.avaliacao.toFixed(1) },
+    { label: "Próximos treinos", value: String(dashboard.proximosAtendimentos) },
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto max-w-md px-5 pt-6 text-left">
@@ -24,7 +60,7 @@ function ProDashboardPage() {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          {proMetrics.map((metric) => (
+          {metrics.map((metric) => (
             <div key={metric.label} className="rounded-3xl bg-card p-4 shadow-[var(--shadow-soft)]">
               <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{metric.label}</p>
               <p className="mt-2 text-lg font-bold">{metric.value}</p>
@@ -43,10 +79,16 @@ function ProDashboardPage() {
         </div>
 
         <div className="mt-5 grid gap-3">
-          {trainers.slice(0, 2).map((trainer) => (
-            <div key={trainer.id} className="rounded-3xl bg-card p-4 shadow-[var(--shadow-soft)]">
-              <p className="text-sm font-semibold">{trainer.name}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{trainer.specialties.join(" · ")}</p>
+          <h2 className="text-base font-semibold">Próximos atendimentos</h2>
+          {dashboard.proximos.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">Nenhum atendimento agendado.</p>
+          )}
+          {dashboard.proximos.map((session) => (
+            <div key={session.id} className="rounded-3xl bg-card p-4 shadow-[var(--shadow-soft)]">
+              <p className="text-sm font-semibold">{session.clienteNome}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {formatDate(session.datetime)} · {formatTime(session.datetime)} · {formatBRL(session.value)}
+              </p>
             </div>
           ))}
         </div>

@@ -1,17 +1,76 @@
 import { Link } from "@tanstack/react-router";
 import { Minus, Navigation, Plus } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import type { Trainer } from "../data/mock-domain";
+import type { Trainer } from "../../modules/marketplace/domain/marketplace.types";
 
 type Props = {
   trainers: Trainer[];
 };
 
+type Position = { left: number; top: number };
+
+function initialsOf(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+function positionsFor(trainers: Trainer[]): Map<string, Position> {
+  const entries = trainers.map((trainer) => ({ id: trainer.id, lat: trainer.latitude, lng: trainer.longitude }));
+  const withCoords = entries.filter((entry): entry is { id: string; lat: number; lng: number } =>
+    entry.lat != null && entry.lng != null,
+  );
+
+  if (withCoords.length === 0) {
+    return new Map(
+      entries.map((entry, index) => [
+        entry.id,
+        { left: 20 + ((index * 30) % 60), top: 32 + ((index * 22) % 42) },
+      ]),
+    );
+  }
+
+  const lats = withCoords.map((entry) => entry.lat);
+  const lngs = withCoords.map((entry) => entry.lng);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+  const spanLat = Math.max(0.001, maxLat - minLat);
+  const spanLng = Math.max(0.001, maxLng - minLng);
+
+  return new Map(
+    withCoords.map((entry) => [
+      entry.id,
+      {
+        left: 15 + ((entry.lng - minLng) / spanLng) * 70,
+        top: 25 + (1 - (entry.lat - minLat) / spanLat) * 55,
+      },
+    ] as [string, Position]),
+  );
+}
+
+function MapPinBadge({ trainer }: { trainer: Trainer }) {
+  if (trainer.photo) {
+    return <img src={trainer.photo} alt="" className="h-5 w-5 rounded-full bg-white object-cover" />;
+  }
+  return (
+    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-bold text-[var(--brand-black)]">
+      {initialsOf(trainer.name)}
+    </span>
+  );
+}
+
 export function MapMock({ trainers }: Props) {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
+
+  const positions = useMemo(() => positionsFor(trainers), [trainers]);
 
   const onDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -58,29 +117,32 @@ export function MapMock({ trainers }: Props) {
           <path d="M 0 280 Q 300 320 600 270 T 1000 290" stroke="#cdd6df" strokeWidth="10" fill="none" strokeLinecap="round" />
         </svg>
 
-        {trainers.map((trainer) => (
-          <Link
-            key={trainer.id}
-            to="/trainer/$id"
-            params={{ id: trainer.id }}
-            className="absolute -translate-x-1/2 -translate-y-full transition-transform hover:scale-110"
-            style={{ left: `${trainer.posX}%`, top: `${trainer.posY}%` }}
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            <div className="relative flex flex-col items-center">
-              {trainer.boosted && (
-                <span className="mb-1 rounded-full bg-[var(--brand-black)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--brand-yellow)] shadow-md">
-                  Premium
-                </span>
-              )}
-              <div className="flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-black)] bg-[var(--brand-yellow)] px-2.5 py-1 text-xs font-bold shadow-[var(--shadow-pin)]">
-                <img src={trainer.photo} alt="" className="h-5 w-5 rounded-full bg-white object-cover" />
-                R$ {trainer.pricePerHour}
+        {trainers.map((trainer) => {
+          const pos = positions.get(trainer.id) ?? { left: 50, top: 50 };
+          return (
+            <Link
+              key={trainer.id}
+              to="/trainer/$id"
+              params={{ id: trainer.id }}
+              className="absolute -translate-x-1/2 -translate-y-full transition-transform hover:scale-110"
+              style={{ left: `${pos.left}%`, top: `${pos.top}%` }}
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <div className="relative flex flex-col items-center">
+                {trainer.boosted && (
+                  <span className="mb-1 rounded-full bg-[var(--brand-black)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--brand-yellow)] shadow-md">
+                    Premium
+                  </span>
+                )}
+                <div className="flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-black)] bg-[var(--brand-yellow)] px-2.5 py-1 text-xs font-bold shadow-[var(--shadow-pin)]">
+                  <MapPinBadge trainer={trainer} />
+                  R$ {trainer.pricePerHour}
+                </div>
+                <div className="-mt-0.5 h-0 w-0 border-x-[6px] border-t-[8px] border-x-transparent border-t-[var(--brand-black)]" />
               </div>
-              <div className="-mt-0.5 h-0 w-0 border-x-[6px] border-t-[8px] border-x-transparent border-t-[var(--brand-black)]" />
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
 
       <div className="absolute right-4 top-4 flex flex-col gap-1 rounded-xl bg-white shadow-md">

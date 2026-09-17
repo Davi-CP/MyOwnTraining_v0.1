@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./button";
-import { modalities } from "../data/mock-domain";
+import { modalities } from "../data/modalities";
 
 export type Filters = {
   location: string;

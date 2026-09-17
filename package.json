@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:reset": "cd src/integrations/supabase && supabase db reset",
+    "seed:remote": "node --env-file=.env --env-file=.env.local scripts/seed-remote.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.6",

@@ -7,7 +7,10 @@ import { FilterSheet, DEFAULT_FILTERS, type Filters } from "../shared/components
 import { Input } from "../shared/components/input";
 import { MapMock } from "../shared/components/map-mock";
 import { TrainerCard } from "../shared/components/trainer-card";
-import { modalities, trainers } from "../shared/data/mock-domain";
+import { modalities } from "../shared/data/modalities";
+import { useTrainers } from "../modules/marketplace/hooks/use-trainers";
+import { useFavorites } from "../modules/marketplace/hooks/use-favorites";
+import { useToggleFavorite } from "../modules/marketplace/hooks/use-toggle-favorite";
 
 export const Route = createFileRoute("/_private/home")({
   component: HomePage,
@@ -18,6 +21,11 @@ function HomePage() {
   const [query, setQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+
+  const { data: trainers = [], isLoading } = useTrainers();
+  const { data: favorites = [] } = useFavorites();
+  const toggleFavorite = useToggleFavorite();
+  const favoriteIds = useMemo(() => new Set(favorites.map((trainer) => trainer.id)), [favorites]);
 
   const visibleTrainers = useMemo(
     () =>
@@ -38,7 +46,7 @@ function HomePage() {
 
         return searchMatch && modalityMatch && locationMatch && priceMatch;
       }),
-    [filters, query],
+    [filters, query, trainers],
   );
 
   return (
@@ -89,8 +97,17 @@ function HomePage() {
           <h2 className="text-base font-semibold">Resultados</h2>
           <span className="text-xs text-muted-foreground">{visibleTrainers.length} profissionais</span>
         </div>
+        {isLoading && <p className="py-8 text-center text-sm text-muted-foreground">Carregando profissionais...</p>}
+        {!isLoading && visibleTrainers.length === 0 && (
+          <p className="py-8 text-center text-sm text-muted-foreground">Nenhum profissional encontrado.</p>
+        )}
         {visibleTrainers.map((trainer) => (
-          <TrainerCard key={trainer.id} trainer={trainer} />
+          <TrainerCard
+            key={trainer.id}
+            trainer={trainer}
+            isFavorite={favoriteIds.has(trainer.id)}
+            onToggleFavorite={() => toggleFavorite.mutate(trainer.id)}
+          />
         ))}
       </div>
 
