@@ -9,11 +9,30 @@ export class SupabaseAuthRepository implements AuthRepository {
     if (error) throw new AppError("AUTH_SESSION_ERROR", error.message);
 
     const session = data.session;
+    let roles: string[] = [];
+
+    if (session?.user) {
+      const { data: roleRows, error: roleError } = await supabase
+        .from("papeis_usuario")
+        .select("papel")
+        .eq("usuario_id", session.user.id);
+
+      if (roleError) throw new AppError("AUTH_ROLE_ERROR", roleError.message);
+      roles = roleRows.map((row) => row.papel as string);
+    }
+
     return {
       user: session?.user
-        ? { id: session.user.id, email: session.user.email ?? null }
+        ? {
+            id: session.user.id,
+            email: session.user.email ?? null,
+            roles,
+            primaryRole: roles[0] ?? null,
+          }
         : null,
       accessToken: session?.access_token ?? null,
+      roles,
+      primaryRole: roles[0] ?? null,
     };
   }
 
