@@ -30,6 +30,14 @@ export type Booking = {
   value: number;
 };
 
+export type CreateBookingInput = {
+  trainerId: string;
+  datetime: string;
+  durationMinutes: number;
+  location: string;
+  total: number;
+};
+
 export type ProSession = {
   id: string;
   clienteNome: string;

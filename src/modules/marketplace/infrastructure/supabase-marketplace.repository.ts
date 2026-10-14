@@ -2,6 +2,7 @@ import { supabase } from "../../../integrations/supabase/client";
 import type {
   AdminMetrics,
   Booking,
+  CreateBookingInput,
   ProDashboard,
   ProSession,
   Trainer,
@@ -147,6 +148,27 @@ export class SupabaseMarketplaceRepository implements MarketplaceRepository {
         value: Number(row.total ?? 0),
       };
     });
+  }
+
+  async createBooking(userId: string, input: CreateBookingInput): Promise<string> {
+    const clienteId = await this.getClientProfileId(userId);
+    if (!clienteId) throw new Error("Perfil de cliente não encontrado.");
+
+    const { data, error } = await supabase
+      .from("agendamentos")
+      .insert({
+        cliente_id: clienteId,
+        personal_id: input.trainerId,
+        agendado_para: input.datetime,
+        duracao_minutos: input.durationMinutes,
+        local: input.location.trim() || null,
+        subtotal: input.total,
+        total: input.total,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return data.id;
   }
 
   private async getTrainerProfileId(userId: string): Promise<string | null> {

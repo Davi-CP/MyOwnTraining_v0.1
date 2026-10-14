@@ -5,7 +5,7 @@ import { BottomNav } from "../shared/components/bottom-nav";
 import { Button } from "../shared/components/button";
 import { FilterSheet, DEFAULT_FILTERS, type Filters } from "../shared/components/filter-sheet";
 import { Input } from "../shared/components/input";
-import { MapMock } from "../shared/components/map-mock";
+import { TrainerMap } from "../shared/components/trainer-map";
 import { TrainerCard } from "../shared/components/trainer-card";
 import { modalities } from "../shared/data/modalities";
 import { useTrainers } from "../modules/marketplace/hooks/use-trainers";
@@ -89,7 +89,7 @@ function HomePage() {
       </div>
 
       <div className="mt-4">
-        <MapMock trainers={visibleTrainers} />
+        <TrainerMap trainers={visibleTrainers} />
       </div>
 
       <div className="mx-auto mt-5 grid max-w-md gap-3 px-5 text-left">

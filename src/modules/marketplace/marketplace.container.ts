@@ -1,4 +1,5 @@
 import { GetAdminMetricsUseCase } from "./application/get-admin-metrics.usecase";
+import { CreateBookingUseCase } from "./application/create-booking.usecase";
 import { GetTrainerUseCase } from "./application/get-trainer.usecase";
 import { ListBookingsUseCase } from "./application/list-bookings.usecase";
 import { ListFavoritesUseCase } from "./application/list-favorites.usecase";
@@ -15,6 +16,7 @@ export const marketplaceContainer = {
   getTrainer: new GetTrainerUseCase(repo),
   listFavorites: new ListFavoritesUseCase(repo),
   listBookings: new ListBookingsUseCase(repo),
+  createBooking: new CreateBookingUseCase(repo),
   listProDashboard: new ListProDashboardUseCase(repo),
   listProHistory: new ListProHistoryUseCase(repo),
   getAdminMetrics: new GetAdminMetricsUseCase(repo),

@@ -94,7 +94,7 @@ function TrainerPage() {
 
             <div className="flex gap-2">
               <Button asChild className="h-12 flex-1 rounded-xl bg-[var(--brand-yellow)] font-semibold text-[var(--brand-black)] hover:bg-[var(--brand-yellow)]/90">
-                <Link to="/bookings">Agendar</Link>
+                <Link to="/booking/$id" params={{ id: trainer.id }}>Agendar</Link>
               </Button>
               <Button variant="outline" className="h-12 rounded-xl px-4" onClick={() => setReviewOpen(true)}>
                 <MessageSquareText className="h-4 w-4" />

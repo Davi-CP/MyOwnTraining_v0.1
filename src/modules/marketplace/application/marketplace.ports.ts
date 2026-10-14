@@ -1,6 +1,7 @@
 import type {
   AdminMetrics,
   Booking,
+  CreateBookingInput,
   ProDashboard,
   ProSession,
   Trainer,
@@ -11,6 +12,7 @@ export interface MarketplaceRepository {
   getTrainer(trainerId: string, userId: string | null): Promise<Trainer | null>;
   listFavorites(userId: string): Promise<Trainer[]>;
   listBookings(userId: string): Promise<Booking[]>;
+  createBooking(userId: string, input: CreateBookingInput): Promise<string>;
   listProDashboard(userId: string): Promise<ProDashboard | null>;
   listProHistory(userId: string): Promise<ProSession[]>;
   getAdminMetrics(): Promise<AdminMetrics>;

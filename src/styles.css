@@ -146,3 +146,45 @@
     color: var(--color-foreground);
   }
 }
+
+.trainer-map-marker-wrapper {
+  background: transparent;
+  border: 0;
+}
+
+.trainer-map-marker {
+  align-items: center;
+  background: var(--brand-yellow);
+  border: 3px solid var(--brand-black);
+  border-radius: 9999px;
+  box-shadow: var(--shadow-pin);
+  color: var(--brand-black);
+  display: flex;
+  font-size: 0.8rem;
+  font-weight: 800;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+
+.trainer-map-marker-premium {
+  background: var(--brand-black);
+  color: var(--brand-yellow);
+}
+
+.trainer-map-popup {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 9rem;
+}
+
+.trainer-map-popup span {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.trainer-map-popup a {
+  color: var(--brand-black);
+  font-size: 0.75rem;
+  font-weight: 700;
+}

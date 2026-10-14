@@ -25,6 +25,7 @@ import { Route as PrivateProSchedulesRouteImport } from './routes/_private.pro.s
 import { Route as PrivateProProfileRouteImport } from './routes/_private.pro.profile'
 import { Route as PrivateProHistoryRouteImport } from './routes/_private.pro.history'
 import { Route as PrivateProDashboardRouteImport } from './routes/_private.pro.dashboard'
+import { Route as PrivateBookingIdRouteImport } from './routes/_private.booking.$id'
 
 const PrivateRoute = PrivateRouteImport.update({
   id: '/_private',
@@ -105,6 +106,11 @@ const PrivateProDashboardRoute = PrivateProDashboardRouteImport.update({
   path: '/pro/dashboard',
   getParentRoute: () => PrivateRoute,
 } as any)
+const PrivateBookingIdRoute = PrivateBookingIdRouteImport.update({
+  id: '/booking/$id',
+  path: '/booking/$id',
+  getParentRoute: () => PrivateRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/client/terms': typeof ClientTermsRoute
   '/pro/privacy': typeof ProPrivacyRoute
   '/pro/terms': typeof ProTermsRoute
+  '/booking/$id': typeof PrivateBookingIdRoute
   '/pro/dashboard': typeof PrivateProDashboardRoute
   '/pro/history': typeof PrivateProHistoryRoute
   '/pro/profile': typeof PrivateProProfileRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/client/terms': typeof ClientTermsRoute
   '/pro/privacy': typeof ProPrivacyRoute
   '/pro/terms': typeof ProTermsRoute
+  '/booking/$id': typeof PrivateBookingIdRoute
   '/pro/dashboard': typeof PrivateProDashboardRoute
   '/pro/history': typeof PrivateProHistoryRoute
   '/pro/profile': typeof PrivateProProfileRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/client/terms': typeof ClientTermsRoute
   '/pro/privacy': typeof ProPrivacyRoute
   '/pro/terms': typeof ProTermsRoute
+  '/_private/booking/$id': typeof PrivateBookingIdRoute
   '/_private/pro/dashboard': typeof PrivateProDashboardRoute
   '/_private/pro/history': typeof PrivateProHistoryRoute
   '/_private/pro/profile': typeof PrivateProProfileRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/client/terms'
     | '/pro/privacy'
     | '/pro/terms'
+    | '/booking/$id'
     | '/pro/dashboard'
     | '/pro/history'
     | '/pro/profile'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/client/terms'
     | '/pro/privacy'
     | '/pro/terms'
+    | '/booking/$id'
     | '/pro/dashboard'
     | '/pro/history'
     | '/pro/profile'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/client/terms'
     | '/pro/privacy'
     | '/pro/terms'
+    | '/_private/booking/$id'
     | '/_private/pro/dashboard'
     | '/_private/pro/history'
     | '/_private/pro/profile'
@@ -338,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateProDashboardRouteImport
       parentRoute: typeof PrivateRoute
     }
+    '/_private/booking/$id': {
+      id: '/_private/booking/$id'
+      path: '/booking/$id'
+      fullPath: '/booking/$id'
+      preLoaderRoute: typeof PrivateBookingIdRouteImport
+      parentRoute: typeof PrivateRoute
+    }
   }
 }
 
@@ -346,6 +365,7 @@ interface PrivateRouteChildren {
   PrivateFavoritesRoute: typeof PrivateFavoritesRoute
   PrivateHomeRoute: typeof PrivateHomeRoute
   PrivateProfileRoute: typeof PrivateProfileRoute
+  PrivateBookingIdRoute: typeof PrivateBookingIdRoute
   PrivateProDashboardRoute: typeof PrivateProDashboardRoute
   PrivateProHistoryRoute: typeof PrivateProHistoryRoute
   PrivateProProfileRoute: typeof PrivateProProfileRoute
@@ -358,6 +378,7 @@ const PrivateRouteChildren: PrivateRouteChildren = {
   PrivateFavoritesRoute: PrivateFavoritesRoute,
   PrivateHomeRoute: PrivateHomeRoute,
   PrivateProfileRoute: PrivateProfileRoute,
+  PrivateBookingIdRoute: PrivateBookingIdRoute,
   PrivateProDashboardRoute: PrivateProDashboardRoute,
   PrivateProHistoryRoute: PrivateProHistoryRoute,
   PrivateProProfileRoute: PrivateProProfileRoute,
